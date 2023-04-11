@@ -1,23 +1,49 @@
 const jsdom = require("jsdom");
 const { JSDOM } = jsdom;
 
-async function crawlPage(baseURL){
-    const response = await fetch(baseURL)
+async function crawlPage(baseURL, currentURL, pages){
+
+    const baseURLObj = new URL(baseURL)
+    const currentURLObj = new URL(currentURL)
+
+    if(baseURLObj.hostname !== currentURLObj.hostname){
+        return pages
+    }
+
+    const normUrl = normalizeURL(currentURL)
+
+    if(pages[normUrl] > 0){
+        pages[normUrl]++
+        return pages
+    }
+
+    pages[normUrl] = 1
+
+    // fetch and parse
+   let htmlBody = ''
     try {
+        const response = await fetch(currentURL)
         if(response.status > 399){
             console.log(`error at ${response.status}`)
-            return
+            return pages
         }
         const contentType = response.headers.get('content-type')
         if(!contentType.includes('text/html')){
-            console.log(`Not a html document`)
-            return
+            console.log(`Not a html document: ${contentType}`)
+            return pages
         }
-        console.log(await response.text())
+        htmlBody = await response.text()
 
     } catch(err){
         console.log(err)
     }
+
+    const nextURLs = getUrlsFromHtml(htmlBody, baseURL)
+    for(const nextURL of nextURLs){
+        pages = await crawlPage(baseURL, nextURL, pages)
+    }
+
+    return pages
     
 }
 

@@ -1,6 +1,6 @@
 const { crawlPage } = require('./crawl.js')
 
-function main(){
+async function main(){
     if(process.argv.length < 3){
         console.log('no website provided') 
         return
@@ -11,8 +11,11 @@ function main(){
     }
 
     const baseURL = process.argv[2]
-    console.log(`Using crawl on: ${baseURL}`)
-    crawlPage(baseURL, {})
+   
+    console.log(`Using crawl on: ${baseURL}...`)
+    const pages = await crawlPage(baseURL, baseURL, {})
+
+    console.log(pages)
 }
 
 main()
